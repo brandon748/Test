@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:label="News AdBlock"
+        android:icon="@drawable/ic_claude_shield"
+        android:theme="@android:style/Theme.Material.Light.DarkActionBar"
+        android:allowBackup="false">
+
+        <activity
+            android:name=".ClaudeMainActivity_v3"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Exported so Android's "Always-on VPN" setting can start it; only the
+             system holds BIND_VPN_SERVICE, so no other app can bind to it. -->
+        <service
+            android:name=".ClaudeAdBlockVpnService_v3"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

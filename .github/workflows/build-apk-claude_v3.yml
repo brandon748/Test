@@ -1,0 +1,54 @@
+name: Build News AdBlock APK
+
+on:
+  push:
+    branches: ['claude/phone-browser-adblocker-jn0eib', 'main']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Bundle the ad/tracker and pop-up blocklists into the APK
+        run: |
+          mkdir -p src/main/assets
+          curl -fsSL https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts \
+            -o src/main/assets/hosts-claude.txt
+          curl -fsSL https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads-onlydomains.txt \
+            -o src/main/assets/popups-claude.txt
+          wc -l src/main/assets/hosts-claude.txt src/main/assets/popups-claude.txt
+
+      - name: Build APK
+        run: gradle --settings-file settings-claude_v3.gradle assembleRelease
+
+      - name: Rename APK
+        run: cp build/outputs/apk/release/*.apk news-adblock-claude.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: news-adblock-claude-apk
+          path: news-adblock-claude.apk
+
+      - name: Publish to the "latest" release for easy phone download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest news-adblock-claude.apk \
+            --title "News AdBlock (latest build)" \
+            --notes "Built from ${GITHUB_SHA}. Open this page on your phone and tap news-adblock-claude.apk to install." \
+            --target "${GITHUB_SHA}"
