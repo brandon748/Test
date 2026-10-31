@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application' version '8.7.3'
+}
+
+android {
+    namespace 'com.claude.adblock'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.claude.adblock'
+        minSdk 24
+        targetSdk 34
+        versionCode 3
+        versionName '1.2'
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest-claude_v3.xml'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // A permanent key lets each new build install over the old one. CI writes it
+    // from the ADBLOCK_KEYSTORE_B64 / ADBLOCK_KEYSTORE_PASSWORD repo secrets.
+    def ksFile = file('release-claude.jks')
+    def ksPass = System.getenv('ADBLOCK_KEYSTORE_PASSWORD')
+    signingConfigs {
+        permanent {
+            if (ksFile.exists() && ksPass) {
+                storeFile ksFile
+                storePassword ksPass
+                keyAlias 'newsadblock'
+                keyPassword ksPass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Falls back to the debug key when the permanent key isn't set up.
+            signingConfig((ksFile.exists() && ksPass) ? signingConfigs.permanent : signingConfigs.debug)
+        }
+    }
+}
